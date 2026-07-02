@@ -33,3 +33,24 @@ class LoginRequest(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+# ---------- Product ----------
+
+class ProductCreate(BaseModel):
+    name: str
+    description: str
+    category: str
+    price: float
+    quantity: int
+
+
+class ProductResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    category: str
+    price: float
+    quantity: int
+
+    class Config:
+        from_attributes = True
