@@ -54,3 +54,12 @@ class ProductResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# ---------- Update Product ----------
+
+class ProductUpdate(BaseModel):
+    name: str
+    description: str
+    category: str
+    price: float
+    quantity: int

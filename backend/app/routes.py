@@ -7,8 +7,10 @@ from app.schemas import (
     UserCreate,
     LoginRequest,
     ProductCreate,
+    ProductUpdate,
     ProductResponse,
 )
+
 from app.auth import (
     hash_password,
     verify_password,
@@ -154,3 +156,55 @@ def get_products(db: Session = Depends(get_db)):
     products = db.query(Product).all()
 
     return products
+
+# ----------------------------
+# Update Product
+# ----------------------------
+@router.put("/products/{product_id}", response_model=ProductResponse)
+def update_product(
+    product_id: int,
+    product: ProductUpdate,
+    db: Session = Depends(get_db)
+):
+
+    db_product = db.query(Product).filter(Product.id == product_id).first()
+
+    if db_product is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+        )
+
+    db_product.name = product.name
+    db_product.description = product.description
+    db_product.category = product.category
+    db_product.price = product.price
+    db_product.quantity = product.quantity
+
+    db.commit()
+    db.refresh(db_product)
+
+    return db_product
+
+# ----------------------------
+# Delete Product
+# ----------------------------
+@router.delete("/products/{product_id}")
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db)
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+        )
+
+    db.delete(product)
+    db.commit()
+
+    return {
+        "message": "Product deleted successfully"
+    }
