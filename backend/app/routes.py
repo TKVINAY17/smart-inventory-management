@@ -98,6 +98,15 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 # ----------------------------
 # Login User
 # ----------------------------
+# ----------------------------
+# Login User
+# ----------------------------
+# ----------------------------
+# Login User
+# ----------------------------
+# ----------------------------
+# Login User
+# ----------------------------
 @router.post("/login")
 def login(user: LoginRequest, db: Session = Depends(get_db)):
 
@@ -123,7 +132,6 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer"
     }
-
 # ----------------------------
 # Add Product
 # ----------------------------
@@ -132,6 +140,8 @@ def add_product(
     product: ProductCreate,
     db: Session = Depends(get_db)
 ):
+
+    # rest of your code...
 
     new_product = Product(
         name=product.name,
