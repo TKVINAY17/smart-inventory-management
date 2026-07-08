@@ -42,6 +42,7 @@ class ProductCreate(BaseModel):
     category: str
     price: float
     quantity: int
+    image: str | None = None
 
 
 class ProductResponse(BaseModel):
@@ -51,6 +52,7 @@ class ProductResponse(BaseModel):
     category: str
     price: float
     quantity: int
+    image: str | None = None
 
     class Config:
         from_attributes = True
@@ -63,3 +65,4 @@ class ProductUpdate(BaseModel):
     category: str
     price: float
     quantity: int
+    image: str | None = None

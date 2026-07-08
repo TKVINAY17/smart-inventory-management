@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.staticfiles import StaticFiles
 from app.database import Base, engine
 from app.models import User, Product
 from app.routes import router
@@ -10,6 +10,12 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Smart Inventory Management API",
     version="1.0.0"
+)
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads"
 )
 
 origins = [
