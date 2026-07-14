@@ -15,8 +15,14 @@ function Sidebar() {
 
       <Link to="/add-product">➕ Add Product</Link>
 
+      <Link to="/sales">🛒 Sales</Link>
+
     </aside>
   );
 }
 
 export default Sidebar;
+
+<Link to="/sales">
+  🛒 Sales
+</Link>

@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import api from "../services/api";
 import "../styles/dashboard.css";
+import DashboardCharts from "../components/DashboardCharts";
 
 function Dashboard() {
   const [products, setProducts] = useState([]);
@@ -112,6 +113,7 @@ function Dashboard() {
             </div>
           </div>
 
+<DashboardCharts />
           {/* Recent Products */}
           <div
             style={{

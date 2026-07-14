@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import EditProduct from "./pages/EditProduct";
-import AddProduct from "./pages/AddProduct";
-import Products from "./pages/Products";
+
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Products from "./pages/Products";
+import AddProduct from "./pages/AddProduct";
+import EditProduct from "./pages/EditProduct";
+import Sales from "./pages/Sales";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -11,43 +14,49 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        <Route
-          path="/"
-          element={<Login />}
-        />
-
-<Route
-  path="/add-product"
-  element={
-    <ProtectedRoute>
-      <AddProduct />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/edit-product/:id"
-  element={
-    <ProtectedRoute>
-      <EditProduct />
-    </ProtectedRoute>
-  }
-/>
-
-        <Route
-  path="/products"
-  element={
-    <ProtectedRoute>
-      <Products />
-    </ProtectedRoute>
-  }
-/>
+        <Route path="/" element={<Login />} />
 
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/products"
+          element={
+            <ProtectedRoute>
+              <Products />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/add-product"
+          element={
+            <ProtectedRoute>
+              <AddProduct />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/edit-product/:id"
+          element={
+            <ProtectedRoute>
+              <EditProduct />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/sales"
+          element={
+            <ProtectedRoute>
+              <Sales />
             </ProtectedRoute>
           }
         />

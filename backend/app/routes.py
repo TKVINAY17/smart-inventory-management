@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 import shutil
 import os
+import io
+from openpyxl import load_workbook, Workbook
+from fastapi import UploadFile, File
 
 from app.database import get_db
 from app.models import User, Product
@@ -137,14 +141,16 @@ def upload_image(file: UploadFile = File(...)):
     if not os.path.exists(upload_folder):
         os.makedirs(upload_folder)
 
-    file_path = os.path.join(upload_folder, file.filename)
+    # Sanitize filename to avoid path traversal
+    safe_filename = os.path.basename(file.filename)
+    file_path = os.path.join(upload_folder, safe_filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     return {
-        "filename": file.filename,
-        "url": f"/uploads/{file.filename}",
+        "filename": safe_filename,
+        "url": f"/uploads/{safe_filename}",
     }
 
 
@@ -210,6 +216,33 @@ def dashboard(db: Session = Depends(get_db)):
         "lowStock": low_stock,
     }
 
+# ----------------------------
+# Dashboard Charts
+# ----------------------------
+@router.get("/dashboard/charts")
+def dashboard_charts(db: Session = Depends(get_db)):
+
+    products = db.query(Product).all()
+
+    labels = []
+    stock = []
+
+    category_count = {}
+
+    for product in products:
+        labels.append(product.name)
+        stock.append(product.quantity)
+
+        if product.category in category_count:
+            category_count[product.category] += 1
+        else:
+            category_count[product.category] = 1
+
+    return {
+        "labels": labels,
+        "stock": stock,
+        "categories": category_count
+    }
 
 # ----------------------------
 # Update Product
@@ -218,19 +251,15 @@ def dashboard(db: Session = Depends(get_db)):
 def update_product(
     product_id: int,
     product: ProductUpdate,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
 
-    db_product = (
-        db.query(Product)
-        .filter(Product.id == product_id)
-        .first()
-    )
+    db_product = db.query(Product).filter(Product.id == product_id).first()
 
     if db_product is None:
         raise HTTPException(
             status_code=404,
-            detail="Product not found",
+            detail="Product not found"
         )
 
     db_product.name = product.name
@@ -273,3 +302,101 @@ def delete_product(
     return {
         "message": "Product deleted successfully"
     }
+
+# ----------------------------
+# Import Products From Excel
+# ----------------------------
+@router.post("/import-products")
+def import_products(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        workbook = load_workbook(file.file)
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid Excel file. Please upload a valid .xlsx file.",
+        )
+
+    sheet = workbook.active
+    rows = list(sheet.iter_rows(values_only=True))
+
+    imported_count = 0
+    errors = []
+
+    # Skip Header Row
+    # Expected columns: name, description, category, price, quantity
+    for index, row in enumerate(rows[1:], start=2):
+        try:
+            name = row[0]
+            description = row[1]
+            category = row[2]
+            price = row[3]
+            quantity = row[4]
+
+            if name is None:
+                errors.append(f"Row {index}: missing name, skipped")
+                continue
+
+            new_product = Product(
+                name=name,
+                description=description,
+                category=category,
+                price=float(price) if price is not None else 0.0,
+                quantity=int(quantity) if quantity is not None else 0,
+            )
+
+            db.add(new_product)
+            imported_count += 1
+
+        except (ValueError, TypeError, IndexError) as e:
+            errors.append(f"Row {index}: {str(e)}")
+            continue
+
+    db.commit()
+
+    return {
+        "message": f"Imported {imported_count} products successfully!",
+        "errors": errors,
+    }
+
+
+# ----------------------------
+# Export Products To Excel
+# ----------------------------
+@router.get("/export-products")
+def export_products(db: Session = Depends(get_db)):
+
+    products = db.query(Product).all()
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Products"
+
+    # Header row
+    sheet.append(["ID", "Name", "Description", "Category", "Price", "Quantity"])
+
+    for product in products:
+        sheet.append([
+            product.id,
+            product.name,
+            product.description,
+            product.category,
+            product.price,
+            product.quantity,
+        ])
+
+    stream = io.BytesIO()
+    workbook.save(stream)
+    stream.seek(0)
+
+    headers = {
+        "Content-Disposition": "attachment; filename=products.xlsx"
+    }
+
+    return StreamingResponse(
+        stream,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers,
+    )

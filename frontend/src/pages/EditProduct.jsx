@@ -14,7 +14,11 @@ function EditProduct() {
     category: "",
     price: "",
     quantity: "",
+    image: "",
   });
+
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [preview, setPreview] = useState("");
 
   useEffect(() => {
     fetchProduct();
@@ -30,8 +34,13 @@ function EditProduct() {
 
       if (selectedProduct) {
         setProduct(selectedProduct);
-      }
 
+        if (selectedProduct.image) {
+          setPreview(
+            `http://127.0.0.1:8000/uploads/${selectedProduct.image}`
+          );
+        }
+      }
     } catch (error) {
       console.error(error);
       alert("Failed to load product.");
@@ -45,12 +54,41 @@ function EditProduct() {
     });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    setSelectedImage(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
 
     try {
+      let imageName = product.image;
+
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append("file", selectedImage);
+
+        const uploadResponse = await api.post(
+          "/upload-image",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        imageName = uploadResponse.data.filename;
+      }
+
       await api.put(`/products/${id}`, {
         ...product,
+        image: imageName,
         price: Number(product.price),
         quantity: Number(product.quantity),
       });
@@ -58,7 +96,6 @@ function EditProduct() {
       alert("✅ Product Updated Successfully!");
 
       navigate("/products");
-
     } catch (error) {
       console.error(error);
       alert("Update Failed.");
@@ -73,15 +110,26 @@ function EditProduct() {
         <Navbar />
 
         <div style={{ padding: "30px" }}>
-          <h1>Edit Product</h1>
+          <h1
+            style={{
+              color: "white",
+              marginBottom: "25px",
+              fontSize: "40px",
+            }}
+          >
+            ✏️ Edit Product
+          </h1>
 
           <form
             onSubmit={handleUpdate}
             style={{
+              background: "#1e293b",
+              padding: "30px",
+              borderRadius: "12px",
+              width: "450px",
               display: "flex",
               flexDirection: "column",
               gap: "15px",
-              width: "400px",
             }}
           >
             <input
@@ -89,6 +137,11 @@ function EditProduct() {
               value={product.name}
               onChange={handleChange}
               placeholder="Product Name"
+              style={{
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+              }}
             />
 
             <input
@@ -96,6 +149,11 @@ function EditProduct() {
               value={product.description}
               onChange={handleChange}
               placeholder="Description"
+              style={{
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+              }}
             />
 
             <input
@@ -103,6 +161,11 @@ function EditProduct() {
               value={product.category}
               onChange={handleChange}
               placeholder="Category"
+              style={{
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+              }}
             />
 
             <input
@@ -111,6 +174,11 @@ function EditProduct() {
               value={product.price}
               onChange={handleChange}
               placeholder="Price"
+              style={{
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+              }}
             />
 
             <input
@@ -119,13 +187,58 @@ function EditProduct() {
               value={product.quantity}
               onChange={handleChange}
               placeholder="Quantity"
+              style={{
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+              }}
             />
 
-            <button type="submit">
-              Update Product
+            <label
+              style={{
+                color: "white",
+                fontWeight: "bold",
+              }}
+            >
+              Product Image
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+
+            {preview && (
+              <img
+                src={preview}
+                alt="Preview"
+                style={{
+                  width: "180px",
+                  height: "180px",
+                  objectFit: "cover",
+                  borderRadius: "10px",
+                  border: "2px solid white",
+                }}
+              />
+            )}
+
+            <button
+              type="submit"
+              style={{
+                background: "#2563eb",
+                color: "white",
+                border: "none",
+                padding: "12px",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "16px",
+                fontWeight: "bold",
+              }}
+            >
+              💾 Update Product
             </button>
           </form>
-
         </div>
       </div>
     </div>
