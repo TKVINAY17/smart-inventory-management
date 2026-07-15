@@ -4,6 +4,7 @@ import Sidebar from "../components/Sidebar";
 import api from "../services/api";
 import "../styles/dashboard.css";
 import DashboardCharts from "../components/DashboardCharts";
+import StatCard from "../components/StatCard";
 
 function Dashboard() {
   const [products, setProducts] = useState([]);
@@ -39,7 +40,7 @@ function Dashboard() {
       <Sidebar />
 
       {/* Main Content */}
-     <div className="dashboard-content">
+      <div className="dashboard-content">
         {/* Navbar */}
         <Navbar />
 
@@ -55,65 +56,46 @@ function Dashboard() {
             Dashboard
           </h1>
 
-          {/* Dashboard Cards */}
           <div
             style={{
-              display: "flex",
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              alignItems: "stretch",
               gap: "20px",
-              justifyContent: "center",
-              flexWrap: "wrap",
+              marginBottom: "40px",
             }}
           >
-            {/* Total Products */}
-            <div
-              style={{
-                background: "#2563eb",
-                color: "white",
-                padding: "25px",
-                borderRadius: "12px",
-                width: "250px",
-                textAlign: "center",
-              }}
-            >
-              <h2>📦</h2>
-              <h3>Total Products</h3>
-              <h1>{totalProducts}</h1>
-            </div>
+            <StatCard
+              icon="📦"
+              title="Total Products"
+              value={totalProducts}
+              color="#2563eb"
+            />
 
-            {/* Inventory Value */}
-            <div
-              style={{
-                background: "#16a34a",
-                color: "white",
-                padding: "25px",
-                borderRadius: "12px",
-                width: "250px",
-                textAlign: "center",
-              }}
-            >
-              <h2>💰</h2>
-              <h3>Inventory Value</h3>
-              <h1>₹{inventoryValue.toLocaleString()}</h1>
-            </div>
+            <StatCard
+              icon="💰"
+              title="Inventory Value"
+              value={`₹${inventoryValue.toLocaleString()}`}
+              color="#16a34a"
+            />
 
-            {/* Low Stock */}
-            <div
-              style={{
-                background: "#dc2626",
-                color: "white",
-                padding: "25px",
-                borderRadius: "12px",
-                width: "250px",
-                textAlign: "center",
-              }}
-            >
-              <h2>⚠️</h2>
-              <h3>Low Stock</h3>
-              <h1>{lowStock}</h1>
-            </div>
+            <StatCard
+              icon="⚠️"
+              title="Low Stock"
+              value={lowStock}
+              color="#dc2626"
+            />
+
+            <StatCard
+              icon="🛒"
+              title="Total Sales"
+              value="0"
+              color="#9333ea"
+            />
           </div>
 
-<DashboardCharts />
+          <DashboardCharts />
+
           {/* Recent Products */}
           <div
             style={{

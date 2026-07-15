@@ -191,29 +191,40 @@ def get_products(db: Session = Depends(get_db)):
 # ----------------------------
 # Dashboard
 # ----------------------------
+from app.models import Product, Sale
+
 @router.get("/dashboard")
 def dashboard(db: Session = Depends(get_db)):
 
     products = db.query(Product).all()
+    sales = db.query(Sale).all()
 
     total_products = len(products)
 
-    inventory_value = 0
-    low_stock = 0
+    inventory_value = sum(
+        product.price * product.quantity
+        for product in products
+    )
 
-    for product in products:
-        price = product.price if product.price else 0
-        quantity = product.quantity if product.quantity else 0
+    low_stock = len([
+        product
+        for product in products
+        if product.quantity < 10
+    ])
 
-        inventory_value += price * quantity
+    total_sales = len(sales)
 
-        if quantity < 10:
-            low_stock += 1
+    revenue = sum(
+        sale.total_price
+        for sale in sales
+    )
 
     return {
         "totalProducts": total_products,
         "inventoryValue": inventory_value,
         "lowStock": low_stock,
+        "totalSales": total_sales,
+        "revenue": revenue,
     }
 
 # ----------------------------
