@@ -1,3 +1,5 @@
+
+import { generateInvoice } from "../utils/generateInvoice";
 function InvoiceModal({
   open,
   onClose,
@@ -73,39 +75,54 @@ function InvoiceModal({
         </h2>
 
         <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: "30px",
-          }}
-        >
-          <button
-            onClick={() => window.print()}
-            style={{
-              background: "#16a34a",
-              color: "white",
-              border: "none",
-              padding: "12px 20px",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
-          >
-            🖨 Print Invoice
-          </button>
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "30px",
+    gap: "15px",
+  }}
+>
+         <button
+  onClick={() => window.print()}
+  style={{
+    background: "#16a34a",
+    color: "white",
+    border: "none",
+    padding: "12px 20px",
+    borderRadius: "8px",
+    cursor: "pointer",
+  }}
+>
+  🖨 Print
+</button>
 
-          <button
-            onClick={onClose}
-            style={{
-              background: "#dc2626",
-              color: "white",
-              border: "none",
-              padding: "12px 20px",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
-          >
-            Close
-          </button>
+<button
+  onClick={() => generateInvoice(sale)}
+  style={{
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    padding: "12px 20px",
+    borderRadius: "8px",
+    cursor: "pointer",
+  }}
+>
+  📄 Download PDF
+</button>
+
+<button
+  onClick={onClose}
+  style={{
+    background: "#dc2626",
+    color: "white",
+    border: "none",
+    padding: "12px 20px",
+    borderRadius: "8px",
+    cursor: "pointer",
+  }}
+>
+  Close
+</button>
         </div>
       </div>
     </div>

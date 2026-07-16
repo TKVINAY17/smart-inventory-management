@@ -70,19 +70,37 @@ function DashboardCharts() {
   };
 
   const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    devicePixelRatio: window.devicePixelRatio || 2,
     plugins: {
       legend: {
-        labels: { color: "#e2e8f0" },
+        labels: {
+          color: "#fff",
+          font: {
+            size: 14,
+            weight: "bold",
+          },
+        },
       },
     },
     scales: {
       x: {
-        ticks: { color: "#e2e8f0" },
-        grid: { color: "rgba(255,255,255,0.08)" },
+        ticks: {
+          color: "#fff",
+          font: {
+            size: 13,
+            weight: "bold",
+          },
+        },
       },
       y: {
-        ticks: { color: "#e2e8f0" },
-        grid: { color: "rgba(255,255,255,0.08)" },
+        ticks: {
+          color: "#fff",
+          font: {
+            size: 13,
+          },
+        },
       },
     },
   };
@@ -103,9 +121,18 @@ function DashboardCharts() {
   };
 
   const pieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    devicePixelRatio: window.devicePixelRatio || 2,
     plugins: {
       legend: {
-        labels: { color: "#e2e8f0" },
+        labels: {
+          color: "#fff",
+          font: {
+            size: 14,
+            weight: "bold",
+          },
+        },
       },
     },
   };
@@ -125,11 +152,14 @@ function DashboardCharts() {
           padding: "20px",
           borderRadius: "12px",
           width: "500px",
+          height: "380px",
           boxShadow: "0 5px 15px rgba(0,0,0,0.35)",
         }}
       >
         <h2 style={{ color: "white" }}>📊 Product Stock</h2>
-        <Bar data={barData} options={barOptions} />
+        <div style={{ position: "relative", height: "300px" }}>
+          <Bar data={barData} options={barOptions} />
+        </div>
       </div>
 
       <div
@@ -138,11 +168,14 @@ function DashboardCharts() {
           padding: "20px",
           borderRadius: "12px",
           width: "400px",
+          height: "380px",
           boxShadow: "0 5px 15px rgba(0,0,0,0.35)",
         }}
       >
         <h2 style={{ color: "white" }}>🥧 Categories</h2>
-        <Pie data={pieData} options={pieOptions} />
+        <div style={{ position: "relative", height: "300px" }}>
+          <Pie data={pieData} options={pieOptions} />
+        </div>
       </div>
     </div>
   );

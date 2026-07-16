@@ -3,6 +3,7 @@ import api from "../services/api";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import InvoiceModal from "../components/InvoiceModal";
+import { generateInvoice } from "../utils/generateInvoice";
 
 function Sales() {
   const [products, setProducts] = useState([]);
@@ -10,7 +11,7 @@ function Sales() {
   const [selectedProduct, setSelectedProduct] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedSale, setSelectedSale] = useState(null);
-const [showInvoice, setShowInvoice] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -49,21 +50,20 @@ const [showInvoice, setShowInvoice] = useState(false);
 
     try {
       const response = await api.post("/sales", {
-  product_id: Number(selectedProduct),
-  quantity: Number(quantity),
-});
+        product_id: Number(selectedProduct),
+        quantity: Number(quantity),
+      });
 
-alert("✅ Sale completed successfully!");
+      alert("✅ Sale completed successfully!");
 
-setSelectedSale(response.data);
-setShowInvoice(true);
+      setSelectedSale(response.data);
+      setShowInvoice(true);
 
       setSelectedProduct("");
       setQuantity(1);
 
       fetchProducts();
       fetchSales();
-
     } catch (error) {
       console.error(error);
 
@@ -183,6 +183,7 @@ setShowInvoice(true);
                   <th>Quantity</th>
                   <th>Unit Price</th>
                   <th>Total</th>
+                  <th>Invoice</th>
                 </tr>
               </thead>
 
@@ -199,14 +200,31 @@ setShowInvoice(true);
                       <td>{sale.id}</td>
                       <td>{sale.product_name}</td>
                       <td>{sale.quantity}</td>
-                      <td>₹{sale.unit_price}</td>
-                      <td>₹{sale.total_price}</td>
+                      <td>Rs. {sale.unit_price}</td>
+                      <td>Rs. {sale.total_price}</td>
+
+                      <td>
+                        <button
+                          onClick={() => generateInvoice(sale)}
+                          style={{
+                            background: "#2563eb",
+                            color: "white",
+                            border: "none",
+                            padding: "8px 14px",
+                            borderRadius: "8px",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          📄 Download
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td
-                      colSpan="5"
+                      colSpan="6"
                       style={{
                         padding: "20px",
                         textAlign: "center",
@@ -216,15 +234,15 @@ setShowInvoice(true);
                     </td>
                   </tr>
                 )}
-                <InvoiceModal
-  open={showInvoice}
-  sale={selectedSale}
-  onClose={() => setShowInvoice(false)}
-/>
               </tbody>
             </table>
           </div>
 
+          <InvoiceModal
+            open={showInvoice}
+            sale={selectedSale}
+            onClose={() => setShowInvoice(false)}
+          />
         </div>
       </div>
     </div>
