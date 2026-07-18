@@ -6,6 +6,8 @@ import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";
 import EditProduct from "./pages/EditProduct";
 import Sales from "./pages/Sales";
+import Reports from "./pages/Reports";
+import Suppliers from "./pages/Suppliers";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -13,7 +15,6 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         <Route path="/" element={<Login />} />
 
         <Route
@@ -61,6 +62,33 @@ function App() {
           }
         />
 
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <Reports />
+            </ProtectedRoute>
+          }
+        />
+
+      <Route
+  path="/suppliers"
+  element={
+    <ProtectedRoute>
+      <Suppliers />
+    </ProtectedRoute>
+  }
+/>
+
+
+        <Route
+          path="/suppliers"
+          element={
+            <ProtectedRoute>
+              <Suppliers />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

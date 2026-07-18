@@ -1,0 +1,169 @@
+/* ===============================
+   DASHBOARD BACKGROUND
+================================ */
+
+.dashboard-content{
+
+    background:
+    linear-gradient(
+    135deg,
+    #0F172A,
+    #111827);
+
+    min-height:100vh;
+
+}
+
+/* ===============================
+   PAGE TITLE
+================================ */
+
+.dashboard-title{
+    text-align:center;
+    font-size:34px;
+    font-weight:700;
+    color:white;
+    margin-bottom:35px;
+}
+
+/* ===============================
+   STAT GRID
+================================ */
+
+.dashboard-grid{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(240px,1fr));
+
+    gap:25px;
+
+    margin-bottom:35px;
+
+}
+
+/* ===============================
+   GLASS CARD
+================================ */
+
+.glass-card{
+
+    background:
+    rgba(30,41,59,.85);
+
+    backdrop-filter:blur(15px);
+
+    border-radius:20px;
+
+    padding:22px;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+    0 15px 30px rgba(0,0,0,.30);
+
+    transition:.35s;
+
+}
+
+.glass-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:
+    0 25px 45px rgba(0,0,0,.45);
+
+}
+
+/* ===============================
+   SECTION
+================================ */
+
+.dashboard-section{
+
+    margin-top:35px;
+
+}
+
+/* ===============================
+   TABLE CARD
+================================ */
+
+.table-card{
+
+    background:#1E293B;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    color:white;
+
+    box-shadow:
+    0 15px 30px rgba(0,0,0,.30);
+
+}
+
+/* ===============================
+   TABLE
+================================ */
+
+.table-card table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+.table-card th{
+
+    padding:16px;
+
+    background:
+    linear-gradient(
+    90deg,
+    #2563EB,
+    #7C3AED);
+
+    color:white;
+
+}
+
+.table-card td{
+
+    padding:15px;
+
+    text-align:center;
+
+    border-bottom:
+    1px solid #334155;
+
+}
+
+.table-card tbody tr{
+
+    transition:.25s;
+
+}
+
+.table-card tbody tr:hover{
+
+    background:#334155;
+
+}
+
+/* ===============================
+   RESPONSIVE
+================================ */
+
+@media(max-width:900px){
+
+.dashboard-title{
+
+font-size:36px;
+
+}
+
+}

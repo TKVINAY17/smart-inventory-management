@@ -10,40 +10,77 @@ function Sidebar() {
     navigate("/");
   };
 
+  const menuItems = [
+    {
+      path: "/dashboard",
+      icon: "🏠",
+      label: "Dashboard",
+    },
+    {
+      path: "/products",
+      icon: "📦",
+      label: "Products",
+    },
+    {
+      path: "/add-product",
+      icon: "➕",
+      label: "Add Product",
+    },
+    {
+      path: "/sales",
+      icon: "🛒",
+      label: "Sales",
+    },
+    {
+      path: "/reports",
+      icon: "📊",
+      label: "Reports",
+    },
+    {
+      path: "/suppliers",
+      icon: "🏢",
+      label: "Suppliers",
+    },
+  ];
+
   return (
     <aside className="sidebar">
+      {/* Logo */}
 
-      <h2 className="logo">📦 Inventory</h2>
+      <div className="sidebar-header">
+        <div className="logo-icon">📦</div>
 
-      <hr />
+        <div>
+          <h2 className="logo">Smart Inventory</h2>
+          <span className="logo-subtitle">
+            Management System
+          </span>
+        </div>
+      </div>
 
-      <Link
-        className={location.pathname === "/dashboard" ? "active" : ""}
-        to="/dashboard"
-      >
-        🏠 Dashboard
-      </Link>
+      {/* Navigation */}
 
-      <Link
-        className={location.pathname === "/products" ? "active" : ""}
-        to="/products"
-      >
-        📦 Products
-      </Link>
+      <div className="sidebar-menu">
+        {menuItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={
+              location.pathname === item.path
+                ? "sidebar-link active"
+                : "sidebar-link"
+            }
+          >
+            <span className="menu-icon">
+              {item.icon}
+            </span>
 
-      <Link
-        className={location.pathname === "/add-product" ? "active" : ""}
-        to="/add-product"
-      >
-        ➕ Add Product
-      </Link>
+            {item.label}
+          </Link>
+        ))}
+      </div>
 
-      <Link
-        className={location.pathname === "/sales" ? "active" : ""}
-        to="/sales"
-      >
-        🛒 Sales
-      </Link>
+      {/* Logout */}
 
       <button
         className="logout-btn"
@@ -51,7 +88,6 @@ function Sidebar() {
       >
         🚪 Logout
       </button>
-
     </aside>
   );
 }

@@ -1,7 +1,9 @@
 from pydantic import BaseModel, EmailStr
 
 
-# ---------- Register ----------
+# ----------------------------
+# Register
+# ----------------------------
 
 class UserCreate(BaseModel):
     full_name: str
@@ -9,7 +11,9 @@ class UserCreate(BaseModel):
     password: str
 
 
-# ---------- User Response ----------
+# ----------------------------
+# User Response
+# ----------------------------
 
 class UserResponse(BaseModel):
     id: int
@@ -21,20 +25,27 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
-# ---------- Login ----------
+# ----------------------------
+# Login
+# ----------------------------
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
 
-# ---------- JWT Token Response ----------
+# ----------------------------
+# JWT Token Response
+# ----------------------------
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-# ---------- Product ----------
+
+# ----------------------------
+# Product Create
+# ----------------------------
 
 class ProductCreate(BaseModel):
     name: str
@@ -44,6 +55,10 @@ class ProductCreate(BaseModel):
     quantity: int
     image: str | None = None
 
+
+# ----------------------------
+# Product Response
+# ----------------------------
 
 class ProductResponse(BaseModel):
     id: int
@@ -57,7 +72,10 @@ class ProductResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# ---------- Update Product ----------
+
+# ----------------------------
+# Product Update
+# ----------------------------
 
 class ProductUpdate(BaseModel):
     name: str
@@ -66,3 +84,27 @@ class ProductUpdate(BaseModel):
     price: float
     quantity: int
     image: str | None = None
+
+
+# ----------------------------
+# Supplier Create
+# ----------------------------
+
+class SupplierCreate(BaseModel):
+    company_name: str
+    contact_person: str
+    email: str
+    phone: str
+    address: str
+    gst_number: str
+
+
+# ----------------------------
+# Supplier Response
+# ----------------------------
+
+class SupplierResponse(SupplierCreate):
+    id: int
+
+    class Config:
+        from_attributes = True

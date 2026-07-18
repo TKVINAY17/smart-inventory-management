@@ -1,22 +1,19 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-import shutil
-import os
-import io
 from openpyxl import load_workbook, Workbook
-from fastapi import UploadFile, File
 
 from app.database import get_db
-from app.models import User, Product
+from app.models import User, Product, Sale, Supplier
 from app.schemas import (
     UserCreate,
     LoginRequest,
     ProductCreate,
     ProductUpdate,
     ProductResponse,
+    SupplierCreate,
+    SupplierResponse,
 )
-
 from app.auth import (
     hash_password,
     verify_password,
@@ -24,44 +21,36 @@ from app.auth import (
     verify_token,
 )
 
+import shutil
+import os
+import io
+import qrcode
+
+
 router = APIRouter()
 
-# ----------------------------
-# Get Current User
-# ----------------------------
+
 @router.get("/me")
 def get_current_user(
     authorization: str = Header(None),
     db: Session = Depends(get_db),
 ):
     if authorization is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Authorization header missing",
-        )
+        raise HTTPException(status_code=401, detail="Authorization header missing")
 
     if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid token format",
-        )
+        raise HTTPException(status_code=401, detail="Invalid token format")
 
     token = authorization.split(" ", 1)[1]
     email = verify_token(token)
 
     if email is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token",
-        )
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     user = db.query(User).filter(User.email == email).first()
 
     if user is None:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
+        raise HTTPException(status_code=404, detail="User not found")
 
     return {
         "id": user.id,
@@ -71,19 +60,12 @@ def get_current_user(
     }
 
 
-# ----------------------------
-# Register
-# ----------------------------
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
-
     existing_user = db.query(User).filter(User.email == user.email).first()
 
     if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered",
-        )
+        raise HTTPException(status_code=400, detail="Email already registered")
 
     new_user = User(
         full_name=user.full_name,
@@ -95,34 +77,20 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return {
-        "message": "User registered successfully!"
-    }
+    return {"message": "User registered successfully!"}
 
 
-# ----------------------------
-# Login
-# ----------------------------
 @router.post("/login")
 def login(user: LoginRequest, db: Session = Depends(get_db)):
-
     db_user = db.query(User).filter(User.email == user.email).first()
 
     if db_user is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password",
-        )
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if not verify_password(user.password, db_user.password):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password",
-        )
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    access_token = create_access_token(
-        data={"sub": db_user.email}
-    )
+    access_token = create_access_token(data={"sub": db_user.email})
 
     return {
         "access_token": access_token,
@@ -130,18 +98,11 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
     }
 
 
-# ----------------------------
-# Upload Image
-# ----------------------------
 @router.post("/upload-image")
 def upload_image(file: UploadFile = File(...)):
-
     upload_folder = "uploads"
+    os.makedirs(upload_folder, exist_ok=True)
 
-    if not os.path.exists(upload_folder):
-        os.makedirs(upload_folder)
-
-    # Sanitize filename to avoid path traversal
     safe_filename = os.path.basename(file.filename)
     file_path = os.path.join(upload_folder, safe_filename)
 
@@ -154,15 +115,8 @@ def upload_image(file: UploadFile = File(...)):
     }
 
 
-# ----------------------------
-# Add Product
-# ----------------------------
 @router.post("/products", response_model=ProductResponse)
-def add_product(
-    product: ProductCreate,
-    db: Session = Depends(get_db),
-):
-
+def add_product(product: ProductCreate, db: Session = Depends(get_db)):
     new_product = Product(
         name=product.name,
         description=product.description,
@@ -175,49 +129,24 @@ def add_product(
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
-
     return new_product
 
 
-# ----------------------------
-# Get Products
-# ----------------------------
 @router.get("/products", response_model=list[ProductResponse])
 def get_products(db: Session = Depends(get_db)):
-
     return db.query(Product).all()
 
 
-# ----------------------------
-# Dashboard
-# ----------------------------
-from app.models import Product, Sale
-
 @router.get("/dashboard")
 def dashboard(db: Session = Depends(get_db)):
-
     products = db.query(Product).all()
     sales = db.query(Sale).all()
 
     total_products = len(products)
-
-    inventory_value = sum(
-        product.price * product.quantity
-        for product in products
-    )
-
-    low_stock = len([
-        product
-        for product in products
-        if product.quantity < 10
-    ])
-
+    inventory_value = sum(product.price * product.quantity for product in products)
+    low_stock = len([product for product in products if product.quantity < 10])
     total_sales = len(sales)
-
-    revenue = sum(
-        sale.total_price
-        for sale in sales
-    )
+    revenue = sum(sale.total_price for sale in sales)
 
     return {
         "totalProducts": total_products,
@@ -227,51 +156,37 @@ def dashboard(db: Session = Depends(get_db)):
         "revenue": revenue,
     }
 
-# ----------------------------
-# Dashboard Charts
-# ----------------------------
+
 @router.get("/dashboard/charts")
 def dashboard_charts(db: Session = Depends(get_db)):
-
     products = db.query(Product).all()
 
     labels = []
     stock = []
-
     category_count = {}
 
     for product in products:
         labels.append(product.name)
         stock.append(product.quantity)
-
-        if product.category in category_count:
-            category_count[product.category] += 1
-        else:
-            category_count[product.category] = 1
+        category_count[product.category] = category_count.get(product.category, 0) + 1
 
     return {
         "labels": labels,
         "stock": stock,
-        "categories": category_count
+        "categories": category_count,
     }
 
-# ----------------------------
-# Update Product
-# ----------------------------
+
 @router.put("/products/{product_id}", response_model=ProductResponse)
 def update_product(
     product_id: int,
     product: ProductUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-
     db_product = db.query(Product).filter(Product.id == product_id).first()
 
     if db_product is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Product not found"
-        )
+        raise HTTPException(status_code=404, detail="Product not found")
 
     db_product.name = product.name
     db_product.description = product.description
@@ -282,45 +197,48 @@ def update_product(
 
     db.commit()
     db.refresh(db_product)
-
     return db_product
 
 
-# ----------------------------
-# Delete Product
-# ----------------------------
+@router.put("/products/{product_id}/restock", response_model=ProductResponse)
+def restock_product(
+    product_id: int,
+    quantity: int,
+    db: Session = Depends(get_db),
+):
+    if quantity <= 0:
+        raise HTTPException(status_code=400, detail="Quantity must be greater than 0")
+
+    db_product = db.query(Product).filter(Product.id == product_id).first()
+
+    if db_product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    db_product.quantity += quantity
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+
 @router.delete("/products/{product_id}")
 def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
 ):
-
-    product = (
-        db.query(Product)
-        .filter(Product.id == product_id)
-        .first()
-    )
+    product = db.query(Product).filter(Product.id == product_id).first()
 
     if product is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Product not found",
-        )
+        raise HTTPException(status_code=404, detail="Product not found")
 
     db.delete(product)
     db.commit()
+    return {"message": "Product deleted successfully"}
 
-    return {
-        "message": "Product deleted successfully"
-    }
 
-# ----------------------------
-# Import Products From Excel
-# ----------------------------
 @router.post("/import-products")
 def import_products(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     try:
         workbook = load_workbook(file.file)
@@ -336,8 +254,6 @@ def import_products(
     imported_count = 0
     errors = []
 
-    # Skip Header Row
-    # Expected columns: name, description, category, price, quantity
     for index, row in enumerate(rows[1:], start=2):
         try:
             name = row[0]
@@ -346,7 +262,7 @@ def import_products(
             price = row[3]
             quantity = row[4]
 
-            if name is None:
+            if not name:
                 errors.append(f"Row {index}: missing name, skipped")
                 continue
 
@@ -363,7 +279,6 @@ def import_products(
 
         except (ValueError, TypeError, IndexError) as e:
             errors.append(f"Row {index}: {str(e)}")
-            continue
 
     db.commit()
 
@@ -373,19 +288,13 @@ def import_products(
     }
 
 
-# ----------------------------
-# Export Products To Excel
-# ----------------------------
 @router.get("/export-products")
 def export_products(db: Session = Depends(get_db)):
-
     products = db.query(Product).all()
 
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Products"
-
-    # Header row
     sheet.append(["ID", "Name", "Description", "Category", "Price", "Quantity"])
 
     for product in products:
@@ -402,12 +311,128 @@ def export_products(db: Session = Depends(get_db)):
     workbook.save(stream)
     stream.seek(0)
 
-    headers = {
-        "Content-Disposition": "attachment; filename=products.xlsx"
-    }
+    headers = {"Content-Disposition": "attachment; filename=products.xlsx"}
 
     return StreamingResponse(
         stream,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers=headers,
     )
+
+
+@router.get("/products/{product_id}/qrcode")
+def generate_qrcode(
+    product_id: int,
+    db: Session = Depends(get_db),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    qr_data = f"""
+📦 SMART INVENTORY MANAGEMENT
+
+────────────────────────
+
+🆔 Product ID : {product.id}
+
+📱 Product Name : {product.name}
+
+📝 Description : {product.description}
+
+📂 Category : {product.category}
+
+💰 Price : ₹{product.price}
+
+📦 Stock : {product.quantity}
+
+✅ Status : {"In Stock" if product.quantity > 10 else "Low Stock" if product.quantity > 0 else "Out of Stock"}
+
+────────────────────────
+Generated by Smart Inventory Management
+"""
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return StreamingResponse(buffer, media_type="image/png")
+
+
+@router.post("/suppliers", response_model=SupplierResponse)
+def add_supplier(
+    supplier: SupplierCreate,
+    db: Session = Depends(get_db),
+):
+    new_supplier = Supplier(
+        company_name=supplier.company_name,
+        contact_person=supplier.contact_person,
+        email=supplier.email,
+        phone=supplier.phone,
+        address=supplier.address,
+        gst_number=supplier.gst_number,
+    )
+
+    db.add(new_supplier)
+    db.commit()
+    db.refresh(new_supplier)
+
+    return new_supplier
+
+
+@router.get("/suppliers", response_model=list[SupplierResponse])
+def get_suppliers(db: Session = Depends(get_db)):
+    return db.query(Supplier).all()
+
+
+@router.put("/suppliers/{supplier_id}", response_model=SupplierResponse)
+def update_supplier(
+    supplier_id: int,
+    supplier: SupplierCreate,
+    db: Session = Depends(get_db),
+):
+    db_supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
+
+    if db_supplier is None:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+
+    db_supplier.company_name = supplier.company_name
+    db_supplier.contact_person = supplier.contact_person
+    db_supplier.email = supplier.email
+    db_supplier.phone = supplier.phone
+    db_supplier.address = supplier.address
+    db_supplier.gst_number = supplier.gst_number
+
+    db.commit()
+    db.refresh(db_supplier)
+
+    return db_supplier
+
+
+@router.delete("/suppliers/{supplier_id}")
+def delete_supplier(
+    supplier_id: int,
+    db: Session = Depends(get_db),
+):
+    supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
+
+    if supplier is None:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+
+    db.delete(supplier)
+    db.commit()
+
+    return {"message": "Supplier deleted successfully"}

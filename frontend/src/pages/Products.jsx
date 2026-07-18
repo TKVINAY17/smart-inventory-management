@@ -10,6 +10,8 @@ function Products() {
 
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
+  const [restockProduct, setRestockProduct] = useState(null);
+  const [restockQuantity, setRestockQuantity] = useState("");
 
   const fileInputRef = useRef(null);
 
@@ -72,8 +74,50 @@ function Products() {
   };
 
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
+    (product.name || "").toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleRestock = (product) => {
+    setRestockProduct(product);
+    setRestockQuantity("");
+  };
+
+  const generateQRCode = (productId) => {
+  window.open(
+    `http://127.0.0.1:8000/products/${productId}/qrcode`,
+    "_blank"
+  );
+};
+
+  const updateStock = async () => {
+    const qty = Number(restockQuantity);
+
+    if (!restockQuantity || isNaN(qty) || qty <= 0) {
+      alert("Please enter a valid quantity greater than 0.");
+      return;
+    }
+
+    try {
+      await api.put(
+        `/products/${restockProduct.id}/restock`,
+        null,
+        {
+          params: {
+            quantity: qty,
+          },
+        }
+      );
+
+      alert("✅ Stock Updated!");
+
+      setRestockProduct(null);
+
+      fetchProducts();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update stock.");
+    }
+  };
 
   return (
     <div style={{ display: "flex" }}>
@@ -101,6 +145,73 @@ function Products() {
             flex-wrap: wrap;
           }
         }
+
+        .btn {
+          border: none;
+          cursor: pointer;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+        }
+        .btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+        }
+        .btn:active {
+          transform: translateY(0);
+          box-shadow: none;
+        }
+
+        .btn-pill {
+          padding: 12px 22px;
+          border-radius: 999px;
+          color: white;
+        }
+        .btn-export { background: #2563eb; }
+        .btn-export:hover { background: #1d4ed8; }
+        .btn-import { background: #f59e0b; }
+        .btn-import:hover { background: #d97706; }
+        .btn-add { background: #16a34a; }
+        .btn-add:hover { background: #15803d; }
+
+        .actions-cell {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          align-items: stretch;
+          min-width: 130px;
+        }
+        .actions-row {
+          display: flex;
+          gap: 8px;
+        }
+
+        .btn-sm {
+          padding: 8px 14px;
+          border-radius: 8px;
+          color: white;
+          font-size: 14px;
+          flex: 1;
+        }
+        .btn-edit-sm { background: #2563eb; }
+        .btn-edit-sm:hover { background: #1d4ed8; }
+        .btn-delete-sm { background: #dc2626; }
+        .btn-delete-sm:hover { background: #b91c1c; }
+        .btn-restock-sm { background: #16a34a; width: 100%; }
+        .btn-restock-sm:hover { background: #15803d; }
+
+        .btn-modal {
+          padding: 10px 22px;
+          border-radius: 8px;
+          color: white;
+        }
+        .btn-modal-confirm { background: #16a34a; }
+        .btn-modal-confirm:hover { background: #15803d; }
+        .btn-modal-cancel { background: #dc2626; }
+        .btn-modal-cancel:hover { background: #b91c1c; }
       `}</style>
 
       <Sidebar />
@@ -156,51 +267,27 @@ function Products() {
               />
 
               <button
+                className="btn btn-pill btn-export"
                 onClick={() =>
                   window.open(
                     "http://127.0.0.1:8000/export-products",
                     "_blank"
                   )
                 }
-                style={{
-                  background: "#2563eb",
-                  color: "white",
-                  border: "none",
-                  padding: "12px 22px",
-                  borderRadius: "999px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                }}
               >
                 📤 Export Excel
               </button>
 
               <button
+                className="btn btn-pill btn-import"
                 onClick={() => fileInputRef.current.click()}
-                style={{
-                  background: "#f59e0b",
-                  color: "white",
-                  border: "none",
-                  padding: "12px 22px",
-                  borderRadius: "999px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                }}
               >
                 📥 Import Excel
               </button>
 
               <button
+                className="btn btn-pill btn-add"
                 onClick={() => navigate("/add-product")}
-                style={{
-                  background: "#16a34a",
-                  color: "white",
-                  border: "none",
-                  padding: "12px 22px",
-                  borderRadius: "999px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                }}
               >
                 ➕ Add Product
               </button>
@@ -238,6 +325,7 @@ function Products() {
                   <th style={{ padding: "14px" }}>Category</th>
                   <th style={{ padding: "14px" }}>Price</th>
                   <th style={{ padding: "14px" }}>Quantity</th>
+                  <th>Status</th>
                   <th style={{ padding: "14px" }}>Actions</th>
                 </tr>
               </thead>
@@ -252,6 +340,12 @@ function Products() {
                         textAlign: "center",
                         borderBottom: "1px solid #334155",
                         color: "white",
+                        background:
+                          product.quantity === 0
+                            ? "#450a0a"
+                            : product.quantity <= 5
+                            ? "#4a2c00"
+                            : "transparent",
                       }}
                     >
                       <td style={{ padding: "14px" }}>{product.id}</td>
@@ -280,44 +374,111 @@ function Products() {
                       <td style={{ padding: "14px" }}>{product.quantity}</td>
 
                       <td style={{ padding: "14px" }}>
-                        <button
-                          onClick={() => navigate(`/edit-product/${product.id}`)}
-                          style={{
-                            background: "#2563eb",
-                            color: "white",
-                            border: "none",
-                            padding: "8px 12px",
-                            borderRadius: "6px",
-                            marginRight: "8px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ✏️ Edit
-                        </button>
+                        {product.quantity === 0 ? (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              minWidth: "120px",
+                              padding: "8px 14px",
+                              borderRadius: "20px",
+                              fontWeight: "bold",
+                              whiteSpace: "nowrap",
+                              textAlign: "center",
+                              background: "#dc2626",
+                              color: "white",
+                            }}
+                          >
+                            🔴 Out of Stock
+                          </span>
+                        ) : product.quantity <= 5 ? (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              minWidth: "120px",
+                              padding: "8px 14px",
+                              borderRadius: "20px",
+                              fontWeight: "bold",
+                              whiteSpace: "nowrap",
+                              textAlign: "center",
+                              background: "#f97316",
+                              color: "white",
+                            }}
+                          >
+                            🟠 Critical
+                          </span>
+                        ) : product.quantity <= 10 ? (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              minWidth: "120px",
+                              padding: "8px 14px",
+                              borderRadius: "20px",
+                              fontWeight: "bold",
+                              whiteSpace: "nowrap",
+                              textAlign: "center",
+                              background: "#eab308",
+                              color: "black",
+                            }}
+                          >
+                            🟡 Low Stock
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              minWidth: "120px",
+                              padding: "8px 14px",
+                              borderRadius: "20px",
+                              fontWeight: "bold",
+                              whiteSpace: "nowrap",
+                              textAlign: "center",
+                              background: "#16a34a",
+                              color: "white",
+                            }}
+                          >
+                            🟢 In Stock
+                          </span>
+                        )}
+                      </td>
 
-                        <button
-                          onClick={() => deleteProduct(product.id)}
-                          style={{
-                            background: "#dc2626",
-                            color: "white",
-                            border: "none",
-                            padding: "8px 12px",
-                            borderRadius: "6px",
-                            marginRight: "8px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          🗑 Delete
-                        </button>
+                      <td style={{ padding: "14px" }}>
+                        <div className="actions-cell">
+                          <div className="actions-row">
+                            <button
+                              className="btn btn-sm btn-edit-sm"
+                              onClick={() => navigate(`/edit-product/${product.id}`)}
+                            >
+                              ✏️ Edit
+                            </button>
 
-                        <ProductCodes product={product} />
+                            <button
+                              className="btn btn-sm btn-delete-sm"
+                              onClick={() => deleteProduct(product.id)}
+                            >
+                              🗑 Delete
+                            </button>
+
+                            <button onClick={() => generateQRCode(product.id)}>
+  QR Code
+</button>
+                          </div>
+
+                          <button
+                            className="btn btn-sm btn-restock-sm"
+                            onClick={() => handleRestock(product)}
+                          >
+                            📦 Restock
+                          </button>
+
+                          <ProductCodes product={product} />
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td
-                      colSpan="8"
+                      colSpan="9"
                       style={{
                         textAlign: "center",
                         padding: "25px",
@@ -332,6 +493,68 @@ function Products() {
             </table>
           </div>
           {/* End Product Table */}
+
+          {restockProduct && (
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0,0,0,.6)",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <div
+                style={{
+                  background: "white",
+                  padding: "30px",
+                  borderRadius: "15px",
+                  width: "400px",
+                }}
+              >
+                <h2>📦 Restock Product</h2>
+
+                <p>
+                  <strong>{restockProduct.name}</strong>
+                </p>
+
+                <p>Current Stock : {restockProduct.quantity}</p>
+
+                <input
+                  type="number"
+                  min="1"
+                  value={restockQuantity}
+                  onChange={(e) => setRestockQuantity(e.target.value)}
+                  placeholder="Enter quantity"
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    marginTop: "15px",
+                    marginBottom: "20px",
+                    borderRadius: "8px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    className="btn btn-modal btn-modal-confirm"
+                    onClick={updateStock}
+                  >
+                    Update Stock
+                  </button>
+
+                  <button
+                    className="btn btn-modal btn-modal-cancel"
+                    onClick={() => setRestockProduct(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

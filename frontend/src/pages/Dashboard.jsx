@@ -9,6 +9,8 @@ import LowStockProducts from "../components/LowStockProducts";
 import TopSellingProducts from "../components/TopSellingProducts";
 import RecentSales from "../components/RecentSales";
 import "../styles/dashboardLayout.css";
+import InventoryAlerts from "../components/InventoryAlerts";
+import "../styles/dashboardModern.css";
 
 function Dashboard() {
   const [products, setProducts] = useState([]);
@@ -63,27 +65,14 @@ function Dashboard() {
         <Navbar />
 
         <div style={{ padding: "30px" }}>
-          <h1
-            style={{
-              textAlign: "center",
-              fontSize: "55px",
-              marginBottom: "30px",
-              color: "white",
-            }}
-          >
-            Dashboard
-          </h1>
+         <h1 className="dashboard-title">
+    📊 Smart Inventory Dashboard
+</h1>
 
           {/* Dashboard Cards */}
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "20px",
-              marginBottom: "30px",
-            }}
-          >
+          <div className="dashboard-grid">
+          
             <StatCard
               icon="📦"
               title="Total Products"
@@ -126,22 +115,22 @@ function Dashboard() {
 
           {/* Top Selling Products */}
 
-        <div
-  style={{
-    marginTop: "30px",
-    background: "#1e293b",
-    color: "white",
-    padding: "20px",
-    borderRadius: "15px",
-    boxShadow: "0 5px 15px rgba(0,0,0,.25)",
-  }}
-></div>
+        <div className="table-card"></div>
           <div
   style={{
     marginTop: "30px",
   }}
 >
   <TopSellingProducts />
+</div>
+
+   <div
+  style={{
+    marginTop: "30px",
+    marginBottom: "30px",
+  }}
+>
+  <InventoryAlerts />
 </div>
 
           {/* Recent Products */}

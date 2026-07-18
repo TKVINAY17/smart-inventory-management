@@ -2,9 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.database import Base, engine
-from app.models import User, Product, Sale
+from app.models import User, Product, Sale, Supplier
 from app.routes import router
 from app.sales_routes import router as sales_router
+import sqlite3
+from fastapi import HTTPException
 
 # 1. Create the app FIRST
 app = FastAPI(
@@ -48,3 +50,41 @@ def home():
 @app.get("/health")
 def health():
     return {"status": "Server is running successfully!"}
+
+@app.put("/products/{product_id}/restock")
+def restock_product(product_id: int, quantity: int):
+    conn = sqlite3.connect("inventory.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT quantity FROM products WHERE id=?",
+        (product_id,)
+    )
+
+    product = cursor.fetchone()
+
+    if not product:
+        conn.close()
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+        )
+
+    new_quantity = product[0] + quantity
+
+    cursor.execute(
+        """
+        UPDATE products
+        SET quantity=?
+        WHERE id=?
+        """,
+        (new_quantity, product_id),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "message": "Stock updated successfully",
+        "new_quantity": new_quantity,
+    }

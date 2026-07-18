@@ -1,23 +1,199 @@
-.navbar {
-  height: 70px;
-  background: linear-gradient(90deg, #2563eb, #1d4ed8);
-  color: white;
+/* ===========================
+   NAVBAR
+=========================== */
 
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.navbar{
+    height:80px;
 
-  padding: 0 30px;
+    background:
+    linear-gradient(
+        90deg,
+        #2563EB,
+        #7C3AED);
 
-  box-shadow: 0 3px 10px rgba(0,0,0,.2);
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:0 30px;
+
+    color:white;
+
+    box-shadow:
+    0 8px 20px rgba(0,0,0,.25);
+
+    position:sticky;
+
+    top:0;
+
+    z-index:1000;
 }
 
-.navbar h2{
+/* LEFT */
+
+.navbar-left{
+    min-width:320px;
+}
+
+.navbar-left h2{
     margin:0;
-    font-size:28px;
+    font-size:26px;
+    font-weight:700;
+    white-space:nowrap;
 }
 
-.user{
+/* CENTER */
+
+.navbar-center{
+    flex:1;
+
+    display:flex;
+
+    justify-content:center;
+}
+
+.navbar-center input{
+
+    width:350px;
+
+    padding:12px 18px;
+
+    border:none;
+
+    border-radius:30px;
+
+    background:rgba(255,255,255,.18);
+
+    color:white;
+
+    font-size:15px;
+
+    outline:none;
+
+    backdrop-filter:blur(8px);
+}
+
+.navbar-center input::placeholder{
+
+    color:#e2e8f0;
+}
+
+/* RIGHT */
+
+.navbar-right{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:25px;
+}
+
+.notification{
+
     font-size:24px;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+.notification:hover{
+
+    transform:scale(1.2);
+}
+
+.datetime{
+    font-size:14px;
+    font-weight:500;
+    white-space:nowrap;
+}
+
+.user-profile{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    background:rgba(255,255,255,.15);
+
+    padding:8px 15px;
+
+    border-radius:30px;
+}
+
+.avatar{
+
+    width:42px;
+
+    height:42px;
+
+    border-radius:50%;
+
+    background:white;
+
+    color:#2563EB;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:22px;
+
     font-weight:bold;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:900px){
+
+.navbar{
+
+flex-wrap:wrap;
+
+height:auto;
+
+padding:15px;
+
+gap:15px;
+
+}
+
+.navbar-center{
+    flex:0;
+    display:flex;
+    justify-content:center;
+    margin:0 25px;
+}
+
+.navbar-center input{
+    width:220px !important;
+}
+    padding:10px 16px;
+
+    border:none;
+
+    border-radius:30px;
+
+    background:rgba(255,255,255,.18);
+
+    color:white;
+
+    font-size:14px;
+
+    outline:none;
+
+    backdrop-filter:blur(8px);
+
+    transition:0.3s;
+}
+
+.navbar-center input:focus{
+    width: 180px;   /* Expands when clicked */
 }
