@@ -41,6 +41,21 @@ function Sidebar() {
       icon: "🏢",
       label: "Suppliers",
     },
+
+
+
+{
+  path: "/customers",
+  icon: "👥",
+  label: "Customers",
+},
+
+
+    {
+  path: "/purchase-orders",
+  icon: "📦",
+  label: "Purchase Orders",
+},
   ];
 
   return (

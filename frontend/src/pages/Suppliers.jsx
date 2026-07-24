@@ -103,6 +103,15 @@ function Suppliers() {
     }
   };
 
+  // Moved out of JSX — these are plain JS statements and can't live inside markup
+  const totalSuppliers = suppliers.length;
+
+  const activeSuppliers = suppliers.filter(
+    (supplier) => supplier.company_name
+  ).length;
+
+  const recentSuppliers = suppliers.slice(-5).length;
+
   const inputStyle = {
     width: "100%",
     padding: "10px",
@@ -123,6 +132,28 @@ function Suppliers() {
             "linear-gradient(135deg, #eef2ff 0%, #f4f6f9 45%, #e0e7ff 100%)",
         }}
       >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: "20px",
+            marginBottom: "30px",
+          }}
+        >
+          <div className="card">
+            <h3>🏢 Total Suppliers</h3>
+            <h1>{totalSuppliers}</h1>
+          </div>
+          <div className="card">
+            <h3>✅ Active Suppliers</h3>
+            <h1>{activeSuppliers}</h1>
+          </div>
+          <div className="card">
+            <h3>🆕 Recent Suppliers</h3>
+            <h1>{recentSuppliers}</h1>
+          </div>
+        </div>
+
         <div
           style={{
             display: "flex",
@@ -167,26 +198,42 @@ function Suppliers() {
           style={{
             width: "100%",
             borderCollapse: "collapse",
-            background: "linear-gradient(180deg, #ffffff 0%, #f8faff 100%)",
+            background: "#1E293B",
+            color: "white",
+            border: "1px solid rgba(255,255,255,.08)",
             borderRadius: "10px",
             overflow: "hidden",
-            boxShadow: "0 8px 24px rgba(30, 58, 138, 0.12)",
+            boxShadow: "0 20px 40px rgba(0,0,0,.35)",
           }}
         >
           <thead
             style={{
-              background: "#2563eb",
-              color: "white",
+              background: "linear-gradient(90deg,#2563eb,#7c3aed)",
             }}
           >
             <tr>
-              <th style={{ padding: "12px" }}>Company</th>
-              <th>Contact</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>GST</th>
-              <th>Address</th>
-              <th>Actions</th>
+              {[
+                "Company",
+                "Contact",
+                "Phone",
+                "Email",
+                "GST",
+                "Address",
+                "Actions",
+              ].map((heading) => (
+                <th
+                  key={heading}
+                  style={{
+                    padding: "16px",
+                    textAlign: "left",
+                    fontWeight: 600,
+                    color: "#fff",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  {heading}
+                </th>
+              ))}
             </tr>
           </thead>
 
@@ -195,27 +242,53 @@ function Suppliers() {
               <tr
                 key={supplier.id}
                 style={{
-                  borderBottom: "1px solid #ddd",
+                  transition: ".25s",
+                  borderBottom: "1px solid rgba(255,255,255,.08)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#334155";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
                 }}
               >
-                <td style={{ padding: "12px" }}>{supplier.company_name}</td>
-                <td>{supplier.contact_person}</td>
-                <td>{supplier.phone}</td>
-                <td>{supplier.email}</td>
-                <td>{supplier.gst_number}</td>
-                <td>{supplier.address}</td>
+                <td
+                  style={{
+                    padding: "16px",
+                    fontWeight: "bold",
+                    color: "#60A5FA",
+                  }}
+                >
+                  {supplier.company_name}
+                </td>
+                <td style={{ padding: "16px", color: "#F8FAFC" }}>
+                  {supplier.contact_person}
+                </td>
+                <td style={{ padding: "16px", color: "#F8FAFC" }}>
+                  {supplier.phone}
+                </td>
+                <td style={{ padding: "16px", color: "#F8FAFC" }}>
+                  {supplier.email}
+                </td>
+                <td style={{ padding: "16px", color: "#F8FAFC" }}>
+                  {supplier.gst_number}
+                </td>
+                <td style={{ padding: "16px", color: "#F8FAFC" }}>
+                  {supplier.address}
+                </td>
 
-                <td>
+                <td style={{ padding: "16px", color: "#F8FAFC" }}>
                   <button
                     onClick={() => openEditModal(supplier)}
                     style={{
-                      background: "#16a34a",
-                      color: "white",
+                      background: "#22C55E",
+                      color: "#fff",
                       border: "none",
-                      padding: "6px 10px",
-                      borderRadius: "5px",
-                      marginRight: "8px",
+                      padding: "8px 14px",
+                      borderRadius: "8px",
                       cursor: "pointer",
+                      marginRight: "8px",
+                      fontWeight: 600,
                     }}
                   >
                     ✏ Edit
@@ -224,12 +297,13 @@ function Suppliers() {
                   <button
                     onClick={() => handleDelete(supplier.id)}
                     style={{
-                      background: "#dc2626",
-                      color: "white",
+                      background: "#EF4444",
+                      color: "#fff",
                       border: "none",
-                      padding: "6px 10px",
-                      borderRadius: "5px",
+                      padding: "8px 14px",
+                      borderRadius: "8px",
                       cursor: "pointer",
+                      fontWeight: 600,
                     }}
                   >
                     🗑 Delete

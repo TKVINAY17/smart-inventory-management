@@ -2,11 +2,20 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.database import Base, engine
-from app.models import User, Product, Sale, Supplier
+from app.models import (
+    User,
+    Product,
+    Sale,
+    Supplier,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    Customer,
+)
 from app.routes import router
 from app.sales_routes import router as sales_router
 import sqlite3
 from fastapi import HTTPException
+from app.models import Customer
 
 # 1. Create the app FIRST
 app = FastAPI(
@@ -51,7 +60,7 @@ def home():
 def health():
     return {"status": "Server is running successfully!"}
 
-@app.put("/products/{product_id}/restock")
+
 def restock_product(product_id: int, quantity: int):
     conn = sqlite3.connect("inventory.db")
     cursor = conn.cursor()

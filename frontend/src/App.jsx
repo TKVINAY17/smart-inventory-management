@@ -8,8 +8,10 @@ import EditProduct from "./pages/EditProduct";
 import Sales from "./pages/Sales";
 import Reports from "./pages/Reports";
 import Suppliers from "./pages/Suppliers";
+import Customers from "./pages/Customers";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import PurchaseOrders from "./pages/PurchaseOrders";
 
 function App() {
   return (
@@ -79,7 +81,7 @@ function App() {
     </ProtectedRoute>
   }
 />
-
+<Route path="/customers" element={<Customers />} />
 
         <Route
           path="/suppliers"
@@ -89,8 +91,19 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+  path="/purchase-orders"
+  element={
+    <ProtectedRoute>
+      <PurchaseOrders />
+    </ProtectedRoute>
+  }
+/>
       </Routes>
     </BrowserRouter>
+
+    
   );
 }
 

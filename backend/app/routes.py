@@ -1,10 +1,20 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from openpyxl import load_workbook, Workbook
 
 from app.database import get_db
-from app.models import User, Product, Sale, Supplier
+from app.models import (
+    User,
+    Product,
+    Sale,
+    Supplier,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    Customer,
+)
 from app.schemas import (
     UserCreate,
     LoginRequest,
@@ -13,6 +23,11 @@ from app.schemas import (
     ProductResponse,
     SupplierCreate,
     SupplierResponse,
+    PurchaseOrderCreate,
+    PurchaseOrderResponse,
+    Customer as CustomerSchema,
+    CustomerCreate,
+    CustomerUpdate,
 )
 from app.auth import (
     hash_password,
@@ -436,3 +451,202 @@ def delete_supplier(
     db.commit()
 
     return {"message": "Supplier deleted successfully"}
+
+
+# ==========================================================
+# PURCHASE ORDERS
+# ==========================================================
+
+@router.get(
+    "/purchase-orders",
+    response_model=list[PurchaseOrderResponse],
+)
+def get_purchase_orders(
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(PurchaseOrder)
+        .order_by(PurchaseOrder.id.desc())
+        .all()
+    )
+
+
+@router.post(
+    "/purchase-orders",
+    response_model=PurchaseOrderResponse,
+)
+def create_purchase_order(
+    purchase_order: PurchaseOrderCreate,
+    db: Session = Depends(get_db),
+):
+
+    last_order = (
+        db.query(PurchaseOrder)
+        .order_by(PurchaseOrder.id.desc())
+        .first()
+    )
+
+    next_number = 1
+
+    if last_order:
+        next_number = last_order.id + 1
+
+    po_number = f"PO-{next_number:04d}"
+
+    total = 0
+
+    new_order = PurchaseOrder(
+        po_number=po_number,
+        supplier_id=purchase_order.supplier_id,
+        supplier_name=purchase_order.supplier_name,
+        status="Pending",
+    )
+
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+
+    for item in purchase_order.items:
+
+        item_total = item.quantity * item.unit_price
+
+        total += item_total
+
+        db_item = PurchaseOrderItem(
+            purchase_order_id=new_order.id,
+            product_id=item.product_id,
+            product_name=item.product_name,
+            quantity=item.quantity,
+            unit_price=item.unit_price,
+            total_price=item_total,
+        )
+
+        db.add(db_item)
+
+    new_order.total_amount = total
+
+    db.commit()
+    db.refresh(new_order)
+
+    return new_order
+
+
+@router.delete("/purchase-orders/{order_id}")
+def delete_purchase_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+):
+
+    order = (
+        db.query(PurchaseOrder)
+        .filter(PurchaseOrder.id == order_id)
+        .first()
+    )
+
+    if order is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Purchase Order not found",
+        )
+
+    db.query(PurchaseOrderItem).filter(
+        PurchaseOrderItem.purchase_order_id == order.id
+    ).delete()
+
+    db.delete(order)
+
+    db.commit()
+
+    return {
+        "message": "Purchase Order deleted successfully"
+    }
+
+
+@router.post("/purchase-orders/{po_id}/receive")
+def receive_purchase_order(po_id: int, db: Session = Depends(get_db)):
+
+    po = (
+        db.query(PurchaseOrder)
+        .filter(PurchaseOrder.id == po_id)
+        .first()
+    )
+
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase Order not found")
+
+    if po.status == "Received":
+        raise HTTPException(
+            status_code=400,
+            detail="Purchase Order already received",
+        )
+
+    for item in po.items:
+
+        product = (
+            db.query(Product)
+            .filter(Product.id == item.product_id)
+            .first()
+        )
+
+        if product:
+            product.quantity += item.quantity
+
+    po.status = "Received"
+    po.received_date = datetime.utcnow()
+
+    db.commit()
+
+    return {
+        "message": "Goods received successfully"
+    }
+
+
+# ==========================================================
+# CUSTOMERS
+# ==========================================================
+
+@router.get("/customers", response_model=list[CustomerSchema])
+def get_customers(db: Session = Depends(get_db)):
+    return db.query(Customer).all()
+
+
+@router.post("/customers", response_model=CustomerSchema)
+def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
+    new_customer = Customer(**customer.model_dump())
+    db.add(new_customer)
+    db.commit()
+    db.refresh(new_customer)
+    return new_customer
+
+
+@router.put("/customers/{customer_id}", response_model=CustomerSchema)
+def update_customer(
+    customer_id: int,
+    customer: CustomerUpdate,
+    db: Session = Depends(get_db),
+):
+    db_customer = db.query(Customer).filter(Customer.id == customer_id).first()
+
+    if not db_customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    for key, value in customer.model_dump().items():
+        setattr(db_customer, key, value)
+
+    db.commit()
+    db.refresh(db_customer)
+
+    return db_customer
+
+
+@router.delete("/customers/{customer_id}")
+def delete_customer(customer_id: int, db: Session = Depends(get_db)):
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    db.delete(customer)
+    db.commit()
+
+    return {"message": "Customer deleted successfully"}

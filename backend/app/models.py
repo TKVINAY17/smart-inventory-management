@@ -1,5 +1,16 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from datetime import datetime
+
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    DateTime,
+    ForeignKey,
+)
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.database import Base
 
 
@@ -61,3 +72,72 @@ class Sale(Base):
     unit_price = Column(Float, nullable=False)
     total_price = Column(Float, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# -------------------------
+# Purchase Order
+# -------------------------
+class PurchaseOrder(Base):
+    __tablename__ = "purchase_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    po_number = Column(String(50), unique=True, nullable=False)
+
+    supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False)
+    supplier_name = Column(String(150), nullable=False)
+
+    status = Column(String(30), default="Pending")
+
+    total_amount = Column(Float, default=0)
+
+    order_date = Column(DateTime, default=datetime.utcnow)
+    received_date = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    supplier = relationship("Supplier")
+    items = relationship(
+        "PurchaseOrderItem",
+        back_populates="purchase_order",
+        cascade="all, delete-orphan",
+    )
+
+
+# -------------------------
+# Purchase Order Item
+# -------------------------
+class PurchaseOrderItem(Base):
+    __tablename__ = "purchase_order_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    purchase_order_id = Column(
+        Integer,
+        ForeignKey("purchase_orders.id"),
+        nullable=False,
+    )
+
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
+    product_name = Column(String(150), nullable=False)
+
+    quantity = Column(Integer, nullable=False)
+    unit_price = Column(Float, nullable=False)
+    total_price = Column(Float, nullable=False)
+
+    purchase_order = relationship("PurchaseOrder", back_populates="items")
+
+
+# -------------------------
+# Customer
+# -------------------------
+class Customer(Base):
+    __tablename__ = "customers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    phone = Column(String, unique=True, nullable=False)
+    email = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    city = Column(String, nullable=True)
+    gst_number = Column(String, nullable=True)
